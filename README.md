@@ -4,8 +4,9 @@
 This is a beginner-friendly, browser-based prototype for an AI-style music production workspace.
 
 In Version 1, there is still **no real AI**. Instead, the app now looks more like a simplified DAW workspace:
-- A **Tracks** section with placeholder lanes (Vocals, Guitar, Drums, Piano)
-- A **chatbox** where users type plain-language commands (for example, “make it warmer”)
+- A **left Library panel** with placeholder Files, Instruments, and Samples
+- A **center workspace** with tracks, demo upload, playback, and bottom sound settings sliders
+- A **right chatbox** where users type plain-language commands (for example, “make it warmer”)
 - A basic Web Audio API engine that applies simple effects when demo audio is loaded
 
 The goal is to validate a chat-driven interaction model before building advanced controls.
@@ -34,10 +35,10 @@ http://localhost:8000
 
 ## 3) What each file does
 - `index.html`  
-  Defines the layout: track lanes, demo upload input, playback button, chat history, chat input, and command chips.
+  Defines the three-column layout: left library placeholders, center tracks/playback/sound settings, and right chat history/input/chips.
 
 - `style.css`  
-  Adds clean minimal styling for panel layout, DAW-style track rows, and chat UI.
+  Adds clean minimal styling for the library/workspace/chat layout, DAW-style track rows, sound sliders, and chat UI.
 
 - `script.js`  
   Handles:
