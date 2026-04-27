@@ -9,6 +9,16 @@ const chatInput = document.getElementById('chatInput');
 const chatHistory = document.getElementById('chatHistory');
 const chipButtons = document.querySelectorAll('.chip');
 
+
+// Keep sound settings sliders visually responsive (placeholder UI state only).
+const settingSliders = document.querySelectorAll('.setting-slider');
+settingSliders.forEach((slider) => {
+  slider.title = slider.value;
+  slider.addEventListener('input', () => {
+    slider.title = slider.value;
+  });
+});
+
 // Audio state
 let audioContext;
 let audioBuffer = null;

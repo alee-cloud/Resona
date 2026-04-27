@@ -14,66 +14,128 @@
         command chatbox.
       </p>
 
-      <section class="panel">
-        <label>1) Tracks</label>
+      <section class="workspace-layout">
+        <aside class="panel library-panel">
+          <label>Library</label>
 
-        <div class="track-list">
-          <div class="track-row">
-            <span class="track-name">Vocals</span>
-            <span id="vocalsStatus" class="track-status">No audio loaded yet</span>
+          <div class="library-section">
+            <h2>Files</h2>
+            <ul>
+              <li>Demo Vocal.wav</li>
+              <li>Guitar Loop.wav</li>
+            </ul>
           </div>
-          <div class="track-row">
-            <span class="track-name">Guitar</span>
-            <span class="track-status">No audio loaded yet</span>
+
+          <div class="library-section">
+            <h2>Instruments</h2>
+            <ul>
+              <li>Vocals</li>
+              <li>Guitar</li>
+              <li>Drums</li>
+              <li>Piano</li>
+            </ul>
           </div>
-          <div class="track-row">
-            <span class="track-name">Drums</span>
-            <span class="track-status">No audio loaded yet</span>
+
+          <div class="library-section">
+            <h2>Samples</h2>
+            <ul>
+              <li>Kick 01</li>
+              <li>Snare 02</li>
+              <li>Pad Loop</li>
+              <li>Ambient FX</li>
+            </ul>
           </div>
-          <div class="track-row">
-            <span class="track-name">Piano</span>
-            <span class="track-status">No audio loaded yet</span>
+        </aside>
+
+        <section class="center-column">
+          <section class="panel">
+            <label>1) Tracks</label>
+
+            <div class="track-list">
+              <div class="track-row">
+                <span class="track-name">Vocals</span>
+                <span id="vocalsStatus" class="track-status">No audio loaded yet</span>
+              </div>
+              <div class="track-row">
+                <span class="track-name">Guitar</span>
+                <span class="track-status">No audio loaded yet</span>
+              </div>
+              <div class="track-row">
+                <span class="track-name">Drums</span>
+                <span class="track-status">No audio loaded yet</span>
+              </div>
+              <div class="track-row">
+                <span class="track-name">Piano</span>
+                <span class="track-status">No audio loaded yet</span>
+              </div>
+            </div>
+
+            <div class="secondary-upload">
+              <label for="audioFile" class="small-label">Upload demo audio (single track)</label>
+              <input id="audioFile" type="file" accept="audio/*" />
+            </div>
+          </section>
+
+          <section class="panel">
+            <label>2) Playback</label>
+            <button id="playPauseBtn" disabled>Play</button>
+          </section>
+
+          <section class="panel sound-panel">
+            <label>Sound Settings</label>
+            <div class="sound-grid">
+              <div class="setting-row">
+                <span>Lows</span>
+                <input class="setting-slider" type="range" min="0" max="100" value="50" />
+              </div>
+              <div class="setting-row">
+                <span>Mids</span>
+                <input class="setting-slider" type="range" min="0" max="100" value="50" />
+              </div>
+              <div class="setting-row">
+                <span>Highs</span>
+                <input class="setting-slider" type="range" min="0" max="100" value="50" />
+              </div>
+              <div class="setting-row">
+                <span>Warmth</span>
+                <input class="setting-slider" type="range" min="0" max="100" value="50" />
+              </div>
+              <div class="setting-row">
+                <span>Loudness</span>
+                <input class="setting-slider" type="range" min="0" max="100" value="50" />
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section class="panel chat-panel">
+          <label>3) Command chatbox</label>
+
+          <div id="chatHistory" class="chat-history" aria-live="polite">
+            <div class="message assistant">
+              Assistant: Try a command like “make it warmer” or click an example
+              chip below.
+            </div>
           </div>
-        </div>
 
-        <div class="secondary-upload">
-          <label for="audioFile" class="small-label">Upload demo audio (single track)</label>
-          <input id="audioFile" type="file" accept="audio/*" />
-        </div>
-      </section>
+          <form id="chatForm" class="chat-form">
+            <input
+              id="chatInput"
+              type="text"
+              placeholder="Type a command (example: make it darker)"
+              autocomplete="off"
+            />
+            <button type="submit">Send</button>
+          </form>
 
-      <section class="panel">
-        <label>2) Playback</label>
-        <button id="playPauseBtn" disabled>Play</button>
-      </section>
-
-      <section class="panel chat-panel">
-        <label>3) Command chatbox</label>
-
-        <div id="chatHistory" class="chat-history" aria-live="polite">
-          <div class="message assistant">
-            Assistant: Try a command like “make it warmer” or click an example
-            chip below.
+          <div class="chip-row">
+            <button class="chip" data-command="make it darker" type="button">make it darker</button>
+            <button class="chip" data-command="make it brighter" type="button">make it brighter</button>
+            <button class="chip" data-command="make it warmer" type="button">make it warmer</button>
+            <button class="chip" data-command="make it louder" type="button">make it louder</button>
+            <button class="chip" data-command="reset" type="button">reset</button>
           </div>
-        </div>
-
-        <form id="chatForm" class="chat-form">
-          <input
-            id="chatInput"
-            type="text"
-            placeholder="Type a command (example: make it darker)"
-            autocomplete="off"
-          />
-          <button type="submit">Send</button>
-        </form>
-
-        <div class="chip-row">
-          <button class="chip" data-command="make it darker" type="button">make it darker</button>
-          <button class="chip" data-command="make it brighter" type="button">make it brighter</button>
-          <button class="chip" data-command="make it warmer" type="button">make it warmer</button>
-          <button class="chip" data-command="make it louder" type="button">make it louder</button>
-          <button class="chip" data-command="reset" type="button">reset</button>
-        </div>
+        </section>
       </section>
     </main>
 
