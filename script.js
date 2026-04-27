@@ -1,12 +1,11 @@
 // Version 1 prototype using the Web Audio API.
-// This update replaces tone buttons with a simple chatbox command flow.
+// This file intentionally stays simple and beginner-friendly.
 
 const audioFileInput = document.getElementById('audioFile');
 const playPauseBtn = document.getElementById('playPauseBtn');
-const chatForm = document.getElementById('chatForm');
-const chatInput = document.getElementById('chatInput');
-const chatHistory = document.getElementById('chatHistory');
-const chipButtons = document.querySelectorAll('.chip');
+const effectButtons = document.querySelectorAll('.effect-btn');
+const resetBtn = document.getElementById('resetBtn');
+const statusText = document.getElementById('statusText');
 
 // Audio state
 let audioContext;
@@ -30,12 +29,8 @@ const defaults = {
   masterGain: 1,
 };
 
-function addMessage(role, text) {
-  const message = document.createElement('div');
-  message.className = `message ${role}`;
-  message.textContent = `${role === 'user' ? 'You' : 'Assistant'}: ${text}`;
-  chatHistory.appendChild(message);
-  chatHistory.scrollTop = chatHistory.scrollHeight;
+function updateStatus(message) {
+  statusText.textContent = message;
 }
 
 function initAudioGraph() {
@@ -93,18 +88,19 @@ function createAndStartSource(offsetSeconds) {
   sourceNode.buffer = audioBuffer;
   sourceNode.connect(lowShelfFilter);
 
+  // Start playback from the requested offset.
   sourceNode.start(0, offsetSeconds);
   startTime = audioContext.currentTime - offsetSeconds;
   isPlaying = true;
   playPauseBtn.textContent = 'Pause';
 
   sourceNode.onended = () => {
-    // If track naturally ends, reset transport state.
+    // If the track naturally finishes, reset transport state.
     if (isPlaying) {
       isPlaying = false;
       pauseOffset = 0;
       playPauseBtn.textContent = 'Play';
-      addMessage('assistant', 'Playback finished. Press Play to listen again.');
+      updateStatus('Playback finished. You can press Play again.');
     }
   };
 }
@@ -112,6 +108,7 @@ function createAndStartSource(offsetSeconds) {
 function playAudio() {
   if (!audioBuffer) return;
 
+  // Some browsers suspend context until user gesture.
   if (audioContext.state === 'suspended') {
     audioContext.resume();
   }
@@ -122,87 +119,66 @@ function playAudio() {
 function pauseAudio() {
   if (!isPlaying) return;
 
+  // Save position so we can continue later.
   pauseOffset = audioContext.currentTime - startTime;
   stopCurrentSource();
+
   isPlaying = false;
   playPauseBtn.textContent = 'Play';
 }
 
 function setControlsEnabled(enabled) {
   playPauseBtn.disabled = !enabled;
+  resetBtn.disabled = !enabled;
+  effectButtons.forEach((button) => {
+    button.disabled = !enabled;
+  });
 }
 
 function applyEffect(effectName) {
   switch (effectName) {
     case 'darker':
+      // Reduce highs to make the sound less bright.
       highShelfFilter.gain.value = -8;
       peakingFilter.gain.value = -1;
-      return 'Applied “make it darker”: reduced high frequencies for a smoother top end.';
+      updateStatus(
+        'Made darker: reduced high frequencies so the sound is smoother and less sharp.'
+      );
+      break;
 
     case 'brighter':
+      // Boost highs for extra clarity/sparkle.
       highShelfFilter.gain.value = 7;
       peakingFilter.gain.value = 0;
-      return 'Applied “make it brighter”: boosted high frequencies for more clarity.';
+      updateStatus(
+        'Made brighter: boosted high frequencies so the sound has more top-end clarity.'
+      );
+      break;
 
     case 'warmer':
+      // Add gentle low-mid body and slightly soften highs.
       peakingFilter.gain.value = 4;
       highShelfFilter.gain.value = -2;
       lowShelfFilter.gain.value = 2;
-      return 'Applied “make it warmer”: added low-mid body and softened highs.';
+      updateStatus(
+        'Made warmer: added low-mid body and softened highs for a fuller tone.'
+      );
+      break;
 
     case 'louder':
+      // Increase master gain carefully (avoid aggressive jump).
       outputGain.gain.value = Math.min(outputGain.gain.value + 0.2, 1.6);
-      return 'Applied “make it louder”: raised output gain a little (with a safety cap).';
-
-    case 'reset':
-      applyResetSettings();
-      return 'Applied “reset”: returned filters and volume to default values.';
+      updateStatus(
+        'Made louder: increased output gain a little. Press again for a bit more level.'
+      );
+      break;
 
     default:
-      return '';
+      break;
   }
 }
 
-function commandToEffect(commandText) {
-  // Keep this simple now, so it's easy to swap with real NLP later.
-  const normalized = commandText.toLowerCase().trim();
-
-  if (normalized.includes('darker')) return 'darker';
-  if (normalized.includes('brighter')) return 'brighter';
-  if (normalized.includes('warmer')) return 'warmer';
-  if (normalized.includes('louder')) return 'louder';
-  if (normalized === 'reset' || normalized.includes('reset')) return 'reset';
-
-  return null;
-}
-
-function handleCommand(commandText) {
-  addMessage('user', commandText);
-
-  const effectName = commandToEffect(commandText);
-
-  if (!effectName) {
-    addMessage(
-      'assistant',
-      'I did not understand that yet. Try: make it darker, make it brighter, make it warmer, make it louder, or reset.'
-    );
-    return;
-  }
-
-  // If no demo audio loaded, still respond so the chat feels usable.
-  if (!audioBuffer) {
-    addMessage(
-      'assistant',
-      `I understand “${effectName}”. Upload demo audio to hear this change in playback.`
-    );
-    return;
-  }
-
-  const response = applyEffect(effectName);
-  addMessage('assistant', response);
-}
-
-// Handle file upload (still single-track for this V1).
+// Handle file upload.
 audioFileInput.addEventListener('change', async (event) => {
   const file = event.target.files[0];
   if (!file) return;
@@ -215,7 +191,7 @@ audioFileInput.addEventListener('change', async (event) => {
     const fileArrayBuffer = await file.arrayBuffer();
     audioBuffer = await audioContext.decodeAudioData(fileArrayBuffer);
 
-    // Reset transport and effects for clean start.
+    // Reset transport and effects for a clean start.
     stopCurrentSource();
     isPlaying = false;
     pauseOffset = 0;
@@ -223,12 +199,11 @@ audioFileInput.addEventListener('change', async (event) => {
     applyResetSettings();
 
     setControlsEnabled(true);
-    addMessage('assistant', `Loaded demo audio: ${file.name}. Press Play or send a chat command.`);
+    updateStatus(`Loaded: ${file.name}. Ready to play and apply tone changes.`);
   } catch (error) {
     console.error(error);
-    addMessage(
-      'assistant',
-      'Could not load that file. Try another format like .wav or .mp3.'
+    updateStatus(
+      'Could not load that audio file. Try another format (for example .wav or .mp3).'
     );
   }
 });
@@ -238,26 +213,24 @@ playPauseBtn.addEventListener('click', () => {
 
   if (isPlaying) {
     pauseAudio();
-    addMessage('assistant', 'Paused playback. Press Play to continue from this position.');
+    updateStatus('Paused playback. Press Play to continue from this position.');
   } else {
     playAudio();
-    addMessage('assistant', 'Playing audio. You can send chat commands while it plays.');
+    updateStatus('Playing audio. Try a tone button while it plays.');
   }
 });
 
-chatForm.addEventListener('submit', (event) => {
-  event.preventDefault();
-  const commandText = chatInput.value.trim();
-
-  if (!commandText) return;
-
-  handleCommand(commandText);
-  chatInput.value = '';
+effectButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    if (!audioBuffer) return;
+    const effectName = button.dataset.effect;
+    applyEffect(effectName);
+  });
 });
 
-chipButtons.forEach((chip) => {
-  chip.addEventListener('click', () => {
-    const commandText = chip.dataset.command;
-    handleCommand(commandText);
-  });
+resetBtn.addEventListener('click', () => {
+  if (!audioBuffer) return;
+
+  applyResetSettings();
+  updateStatus('Reset: returned filters and volume to their default values.');
 });

@@ -3,43 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Music Tone Workspace - V1</title>
+    <title>Music Tone Prototype - V1</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <main class="app">
-      <h1>Music Tone Workspace (Version 1)</h1>
+      <h1>Music Tone Prototype (Version 1)</h1>
       <p class="subtitle">
-        A simplified AI-style music production prototype with track lanes and a
-        command chatbox.
+        Upload an audio file, then use simple tone buttons like “darker” or
+        “warmer”.
       </p>
 
       <section class="panel">
-        <label>1) Tracks</label>
-
-        <div class="track-list">
-          <div class="track-row">
-            <span class="track-name">Vocals</span>
-            <span class="track-status">No audio loaded yet</span>
-          </div>
-          <div class="track-row">
-            <span class="track-name">Guitar</span>
-            <span class="track-status">No audio loaded yet</span>
-          </div>
-          <div class="track-row">
-            <span class="track-name">Drums</span>
-            <span class="track-status">No audio loaded yet</span>
-          </div>
-          <div class="track-row">
-            <span class="track-name">Piano</span>
-            <span class="track-status">No audio loaded yet</span>
-          </div>
-        </div>
-
-        <div class="secondary-upload">
-          <label for="audioFile" class="small-label">Upload demo audio (single track)</label>
-          <input id="audioFile" type="file" accept="audio/*" />
-        </div>
+        <label for="audioFile">1) Upload audio file</label>
+        <input id="audioFile" type="file" accept="audio/*" />
       </section>
 
       <section class="panel">
@@ -47,33 +24,28 @@
         <button id="playPauseBtn" disabled>Play</button>
       </section>
 
-      <section class="panel chat-panel">
-        <label>3) Command chatbox</label>
-
-        <div id="chatHistory" class="chat-history" aria-live="polite">
-          <div class="message assistant">
-            Assistant: Try a command like “make it warmer” or click an example
-            chip below.
-          </div>
+      <section class="panel">
+        <label>3) Tone controls</label>
+        <div class="button-row">
+          <button class="effect-btn" data-effect="darker" disabled>
+            Make darker
+          </button>
+          <button class="effect-btn" data-effect="brighter" disabled>
+            Make brighter
+          </button>
+          <button class="effect-btn" data-effect="warmer" disabled>
+            Make warmer
+          </button>
+          <button class="effect-btn" data-effect="louder" disabled>
+            Make louder
+          </button>
+          <button id="resetBtn" disabled>Reset</button>
         </div>
+      </section>
 
-        <form id="chatForm" class="chat-form">
-          <input
-            id="chatInput"
-            type="text"
-            placeholder="Type a command (example: make it darker)"
-            autocomplete="off"
-          />
-          <button type="submit">Send</button>
-        </form>
-
-        <div class="chip-row">
-          <button class="chip" data-command="make it darker" type="button">make it darker</button>
-          <button class="chip" data-command="make it brighter" type="button">make it brighter</button>
-          <button class="chip" data-command="make it warmer" type="button">make it warmer</button>
-          <button class="chip" data-command="make it louder" type="button">make it louder</button>
-          <button class="chip" data-command="reset" type="button">reset</button>
-        </div>
+      <section class="panel">
+        <label>What happened?</label>
+        <p id="statusText">Upload a file to begin.</p>
       </section>
     </main>
 
