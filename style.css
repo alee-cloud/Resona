@@ -97,6 +97,11 @@ li {
 .sound-grid {
   display: grid;
   gap: 0.6rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.sound-grid .setting-row {
+  min-width: 0;
 }
 
 .setting-row {
@@ -146,30 +151,64 @@ button:disabled {
 
 .track-list {
   display: grid;
-  gap: 0.55rem;
+  gap: 0.65rem;
 }
 
 .track-row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 92px 1fr;
   align-items: center;
+  gap: 0.7rem;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--track-bg);
-  padding: 0.65rem 0.8rem;
+  padding: 0.6rem 0.7rem;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.track-row.drag-over {
+  border-color: var(--accent);
+  background: #eef4ff;
 }
 
 .track-name {
   font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.track-lane {
+  position: relative;
+  border: 1px solid #dde3ec;
+  border-radius: 8px;
+  height: 44px;
+  background: #f7f9fd;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+
+.wave-placeholder {
+  position: absolute;
+  inset: 6px 8px 16px;
+  border-radius: 5px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(37, 99, 235, 0.22) 0 4px,
+      rgba(37, 99, 235, 0.08) 4px 8px
+    );
 }
 
 .track-status {
+  position: relative;
+  z-index: 1;
+  margin-left: 0.45rem;
+  margin-bottom: 0.2rem;
   color: var(--muted);
-  font-size: 0.9rem;
-}
-
-.secondary-upload {
-  margin-top: 0.7rem;
+  font-size: 0.82rem;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 999px;
+  padding: 0.12rem 0.45rem;
 }
 
 .chat-panel {
@@ -249,5 +288,9 @@ button:disabled {
 
   .sound-panel {
     max-width: none;
+  }
+
+  .sound-grid {
+    grid-template-columns: 1fr;
   }
 }

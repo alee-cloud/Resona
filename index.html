@@ -52,28 +52,37 @@
             <label>1) Tracks</label>
 
             <div class="track-list">
-              <div class="track-row">
+              <div class="track-row" data-track="Vocals">
                 <span class="track-name">Vocals</span>
-                <span id="vocalsStatus" class="track-status">No audio loaded yet</span>
+                <div class="track-lane">
+                  <div class="wave-placeholder" aria-hidden="true"></div>
+                  <span id="vocalsStatus" class="track-status">Drop audio here</span>
+                </div>
               </div>
-              <div class="track-row">
+              <div class="track-row" data-track="Guitar">
                 <span class="track-name">Guitar</span>
-                <span class="track-status">No audio loaded yet</span>
+                <div class="track-lane">
+                  <div class="wave-placeholder" aria-hidden="true"></div>
+                  <span id="guitarStatus" class="track-status">Drop audio here</span>
+                </div>
               </div>
-              <div class="track-row">
+              <div class="track-row" data-track="Drums">
                 <span class="track-name">Drums</span>
-                <span class="track-status">No audio loaded yet</span>
+                <div class="track-lane">
+                  <div class="wave-placeholder" aria-hidden="true"></div>
+                  <span id="drumsStatus" class="track-status">Drop audio here</span>
+                </div>
               </div>
-              <div class="track-row">
+              <div class="track-row" data-track="Piano">
                 <span class="track-name">Piano</span>
-                <span class="track-status">No audio loaded yet</span>
+                <div class="track-lane">
+                  <div class="wave-placeholder" aria-hidden="true"></div>
+                  <span id="pianoStatus" class="track-status">Drop audio here</span>
+                </div>
               </div>
             </div>
 
-            <div class="secondary-upload">
-              <label for="audioFile" class="small-label">Upload demo audio (single track)</label>
-              <input id="audioFile" type="file" accept="audio/*" />
-            </div>
+            <input id="audioFile" type="file" accept="audio/*" hidden />
           </section>
 
           <section class="panel">
@@ -86,23 +95,35 @@
             <div class="sound-grid">
               <div class="setting-row">
                 <span>Lows</span>
-                <input class="setting-slider" type="range" min="0" max="100" value="50" />
+                <input id="lowsSlider" class="setting-slider" type="range" min="0" max="100" value="50" />
               </div>
               <div class="setting-row">
                 <span>Mids</span>
-                <input class="setting-slider" type="range" min="0" max="100" value="50" />
+                <input id="midsSlider" class="setting-slider" type="range" min="0" max="100" value="50" />
               </div>
               <div class="setting-row">
                 <span>Highs</span>
-                <input class="setting-slider" type="range" min="0" max="100" value="50" />
+                <input id="highsSlider" class="setting-slider" type="range" min="0" max="100" value="50" />
               </div>
               <div class="setting-row">
                 <span>Warmth</span>
-                <input class="setting-slider" type="range" min="0" max="100" value="50" />
+                <input id="warmthSlider" class="setting-slider" type="range" min="0" max="100" value="50" />
               </div>
               <div class="setting-row">
-                <span>Loudness</span>
-                <input class="setting-slider" type="range" min="0" max="100" value="50" />
+                <span>Space</span>
+                <input id="spaceSlider" class="setting-slider" type="range" min="0" max="100" value="50" />
+              </div>
+              <div class="setting-row">
+                <span>Punch</span>
+                <input id="punchSlider" class="setting-slider" type="range" min="0" max="100" value="50" />
+              </div>
+              <div class="setting-row">
+                <span>Width</span>
+                <input id="widthSlider" class="setting-slider" type="range" min="0" max="100" value="50" />
+              </div>
+              <div class="setting-row">
+                <span>Volume</span>
+                <input id="volumeSlider" class="setting-slider" type="range" min="0" max="100" value="50" />
               </div>
             </div>
           </section>

@@ -5,7 +5,7 @@ This is a beginner-friendly, browser-based prototype for an AI-style music produ
 
 In Version 1, there is still **no real AI**. Instead, the app now looks more like a simplified DAW workspace:
 - A **left Library panel** with placeholder Files, Instruments, and Samples
-- A **center workspace** with tracks, demo upload, playback, and bottom sound settings sliders
+- A **center workspace** with DAW-style track lanes, drag-and-drop loading, playback, and bottom sound settings sliders
 - A **right chatbox** where users type plain-language commands (for example, “make it warmer”)
 - A basic Web Audio API engine that applies simple effects when demo audio is loaded
 
@@ -59,8 +59,9 @@ http://localhost:8000
   - Guitar
   - Drums
   - Piano
-- Upload one **demo audio** file (single-track behavior only).
+- Drag and drop one **demo audio** file onto Vocals/Guitar/Drums/Piano (single-track behavior only).
 - Play and pause the loaded audio.
+- See per-lane file status text update after drop.
 - Accept commands through chat text input or example chips:
   - `make it darker`
   - `make it brighter`
@@ -70,6 +71,9 @@ http://localhost:8000
 - Display user + assistant messages in a chat history.
 - If audio is loaded, apply matching Web Audio effects.
 - If audio is not loaded, still respond and prompt for demo upload.
+- Show 8 beginner-friendly sliders in Sound Settings: Lows, Mids, Highs, Warmth, Space, Punch, Width, Volume.
+  - Functional now: Lows, Mids, Highs, Volume (+ chat command visual updates).
+  - Placeholder visuals for now: Warmth, Space, Punch, Width.
 
 ---
 
