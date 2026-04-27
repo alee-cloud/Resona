@@ -1,15 +1,14 @@
-# Music Tone Prototype (Version 1)
+# Music Tone Workspace (Version 1)
 
 ## 1) What this project is
-This is a beginner-friendly, browser-based prototype for an AI-style music production idea.
+This is a beginner-friendly, browser-based prototype for an AI-style music production workspace.
 
-In this Version 1, there is **no real AI**. Instead, the app uses simple preset buttons such as **Make darker** or **Make warmer** and applies audio changes using the browser's **Web Audio API**.
+In Version 1, there is still **no real AI**. Instead, the app now looks more like a simplified DAW workspace:
+- A **Tracks** section with placeholder lanes (Vocals, Guitar, Drums, Piano)
+- A **chatbox** where users type plain-language commands (for example, “make it warmer”)
+- A basic Web Audio API engine that applies simple effects when demo audio is loaded
 
-The goal is to validate the core interaction:
-- Upload audio
-- Play and pause it
-- Click plain-language tone commands
-- Hear immediate results
+The goal is to validate a chat-driven interaction model before building advanced controls.
 
 ---
 
@@ -18,8 +17,8 @@ The goal is to validate the core interaction:
 1. Download or clone this folder.
 2. Open `index.html` in a modern browser (Chrome, Edge, Firefox, Safari).
 
-### Option B: Use a very simple local server (recommended if browser file restrictions appear)
-From this project folder, run one of these:
+### Option B: Use a very simple local server
+From this project folder, run:
 
 ```bash
 python3 -m http.server 8000
@@ -35,56 +34,63 @@ http://localhost:8000
 
 ## 3) What each file does
 - `index.html`  
-  Defines the page structure: upload input, play/pause control, effect buttons, and status text.
+  Defines the layout: track lanes, demo upload input, playback button, chat history, chat input, and command chips.
 
 - `style.css`  
-  Adds clean, minimal styling (layout, spacing, button states, readable colors).
+  Adds clean minimal styling for panel layout, DAW-style track rows, and chat UI.
 
 - `script.js`  
-  Handles all Web Audio API logic: file loading, playback control, filter/gain settings, and status explanations.
+  Handles:
+  - demo audio upload and decode
+  - playback (play/pause)
+  - command parsing from chat text/chips
+  - effect application (`darker`, `brighter`, `warmer`, `louder`, `reset`)
+  - assistant-style responses in chat history
 
 - `README.md`  
-  Explains project purpose, usage, scope, and next steps.
+  Explains purpose, usage, scope, and next steps.
 
 ---
 
 ## 4) What Version 1 can do
-- Upload a local audio file.
-- Play and pause audio.
-- Apply these tone actions:
-  - **Make darker** (reduces high frequencies)
-  - **Make brighter** (boosts high frequencies)
-  - **Make warmer** (adds low-mid warmth)
-  - **Make louder** (careful gain increase)
-  - **Reset** (returns to default tone/volume)
-- Show a plain-English explanation after each action.
+- Show 4 placeholder tracks:
+  - Vocals
+  - Guitar
+  - Drums
+  - Piano
+- Upload one **demo audio** file (single-track behavior only).
+- Play and pause the loaded audio.
+- Accept commands through chat text input or example chips:
+  - `make it darker`
+  - `make it brighter`
+  - `make it warmer`
+  - `make it louder`
+  - `reset`
+- Display user + assistant messages in a chat history.
+- If audio is loaded, apply matching Web Audio effects.
+- If audio is not loaded, still respond and prompt for demo upload.
 
 ---
 
 ## 5) What is intentionally out of scope for now
-To keep this prototype simple, the following are intentionally not included:
-- Real AI or NLP command parsing
-- React or any frontend framework
-- Backend services/APIs
-- Database, login, accounts, or payments
-- Cloud upload/storage
-- Deployment/infrastructure setup
-- Advanced DAW features (multi-track editing, automation lanes, plugins, timeline editing, etc.)
+To keep this prototype simple and GitHub Pages friendly, this version does **not** include:
+- Real AI / LLM integration
+- API keys, backend, database, login, accounts, payments
+- React, Node app tooling, npm, Vite
+- Real multi-track processing for all four lanes
+- Right-side dials (highs/mids/lows/modulation/reverb)
+- Hidden advanced controls or production-ready mixing tools
 
 ---
 
 ## 6) Suggested next steps for Version 2
-- Add a text input where users can type natural-language commands.
-- Implement a simple rule-based interpreter (still no ML needed yet), e.g.:
-  - "darker" -> high-shelf cut
-  - "airy" -> high-shelf boost around upper frequencies
-  - "punchier" -> slight transient/low-end shaping
-- Add a small UI panel showing current filter and gain values.
-- Add an A/B toggle (processed vs. original).
-- Add a safer loudness flow (headroom meter / limiter).
-- Improve presets and transitions with smoother parameter ramps.
+- Add a right-side visual controls panel (highs/mids/lows/etc.) and sync it with chat commands.
+- Improve command parsing with a richer rule system (still optional before real AI).
+- Add smoother transitions (parameter ramps) to avoid abrupt tone changes.
+- Add A/B compare mode (processed vs original).
+- Start basic per-track architecture so each lane can eventually hold its own audio source.
 
 ---
 
 ## Notes
-This project is designed for learning and rapid prototyping. The code is intentionally straightforward so beginners can understand and modify it easily.
+This code stays intentionally simple with comments and clear functions so it is easy to learn from and extend.
