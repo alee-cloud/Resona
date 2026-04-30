@@ -8,11 +8,18 @@
   </head>
   <body>
     <main class="app">
-      <h1>Music Tone Workspace (Version 1)</h1>
-      <p class="subtitle">
-        A simplified AI-style music production prototype with track lanes and a
-        command chatbox.
-      </p>
+      <header class="top-bar panel">
+        <nav class="top-menu" aria-label="Primary">
+          <button type="button" class="menu-item">File</button>
+          <button type="button" class="menu-item">Edit</button>
+          <button type="button" class="menu-item">View</button>
+          <button type="button" class="menu-item">Help</button>
+        </nav>
+        <div class="project-title">Resona Prototype</div>
+        <div class="top-actions">
+          <button id="playPauseBtn" disabled>Play</button>
+        </div>
+      </header>
 
       <section class="workspace-layout">
         <aside class="panel library-panel">
@@ -50,6 +57,7 @@
         <section class="center-column">
           <section class="panel">
             <label>1) Tracks</label>
+            <p id="selectedTrackDisplay" class="small-label">Editing: Overall mix</p>
 
             <div class="track-list">
               <div class="track-row" data-track="Vocals">
@@ -83,11 +91,6 @@
             </div>
 
             <input id="audioFile" type="file" accept="audio/*" hidden />
-          </section>
-
-          <section class="panel">
-            <label>2) Playback</label>
-            <button id="playPauseBtn" disabled>Play</button>
           </section>
 
           <section class="panel sound-panel">
