@@ -10,6 +10,8 @@ const chatHistory = document.getElementById('chatHistory');
 const chipButtons = document.querySelectorAll('.chip');
 const trackRows = document.querySelectorAll('.track-row');
 const selectedTrackDisplay = document.getElementById('selectedTrackDisplay');
+const playhead = document.getElementById('playhead');
+const trackList = document.querySelector('.track-list');
 
 
 // Keep sound settings sliders visually responsive (placeholder UI state only).
@@ -43,6 +45,9 @@ let isPlaying = false;
 let startTime = 0;
 let pauseOffset = 0;
 let selectedTrack = '';
+let selectedTracks = [];
+let playheadFrame = null;
+let isDraggingSelection = false;
 
 // Effect nodes
 let lowShelfFilter;
@@ -86,6 +91,59 @@ function resetAllSliders() {
   setSliderValue(punchSlider, 50);
   setSliderValue(widthSlider, 50);
   setSliderValue(volumeSlider, 50);
+}
+
+function getSelectionTargetText() {
+  if (!selectedTracks.length) return 'overall mix';
+  if (selectedTracks.includes('Master')) return 'Master / overall mix';
+  return selectedTracks.join(' and ');
+}
+
+function updateSelectedTrackDisplay() {
+  if (!selectedTracks.length) {
+    selectedTrackDisplay.textContent = 'Editing: Overall mix';
+  } else {
+    selectedTrackDisplay.textContent = `Editing: ${selectedTracks.join(', ')}`;
+  }
+}
+
+function setSelectedTracks(trackNames) {
+  selectedTracks = [...new Set(trackNames)];
+  selectedTrack = selectedTracks.length ? selectedTracks[0] : '';
+  trackRows.forEach((item) => {
+    const isSelected = selectedTracks.includes(item.dataset.track || '');
+    item.classList.toggle('selected', isSelected);
+  });
+  updateSelectedTrackDisplay();
+}
+
+function updatePlayheadPosition() {
+  if (!playhead || !trackList) return;
+  if (!audioBuffer || !isPlaying) return;
+  const elapsed = audioContext.currentTime - startTime;
+  const progress = Math.max(0, Math.min(1, elapsed / audioBuffer.duration));
+  playhead.style.left = `${progress * 100}%`;
+
+  if (isPlaying) {
+    playheadFrame = window.requestAnimationFrame(updatePlayheadPosition);
+  }
+}
+
+function startPlayheadAnimation() {
+  if (playheadFrame) window.cancelAnimationFrame(playheadFrame);
+  playheadFrame = window.requestAnimationFrame(updatePlayheadPosition);
+}
+
+function pausePlayheadAnimation() {
+  if (playheadFrame) {
+    window.cancelAnimationFrame(playheadFrame);
+    playheadFrame = null;
+  }
+}
+
+function resetPlayhead() {
+  pausePlayheadAnimation();
+  if (playhead) playhead.style.left = '0%';
 }
 
 // Small command map for easy future extension (for example, connecting to visual dials later).
@@ -182,12 +240,14 @@ function createAndStartSource(offsetSeconds) {
   startTime = audioContext.currentTime - offsetSeconds;
   isPlaying = true;
   playPauseBtn.textContent = 'Pause';
+  startPlayheadAnimation();
 
   sourceNode.onended = () => {
     if (isPlaying) {
       isPlaying = false;
       pauseOffset = 0;
       playPauseBtn.textContent = 'Play';
+      resetPlayhead();
       addMessage('assistant', 'Playback finished. Press Play to listen again.');
     }
   };
@@ -210,6 +270,7 @@ function pauseAudio() {
   stopCurrentSource();
   isPlaying = false;
   playPauseBtn.textContent = 'Play';
+  pausePlayheadAnimation();
 }
 
 function setControlsEnabled(enabled) {
@@ -282,18 +343,20 @@ function submitCommand(commandText) {
   if (!audioBuffer) {
     addMessage(
       'assistant',
-      `${commandMap[effectName].noAudioResponse} (Target: ${selectedTrack || 'Overall mix'})`
+      `${commandMap[effectName].noAudioResponse} (Target: ${getSelectionTargetText()})`
     );
     return;
   }
 
   applyEffect(effectName);
-  const response =
-    effectName === 'reset'
-      ? 'Reset tone settings'
-      : selectedTrack
-        ? `Applied a ${effectName} tone to ${selectedTrack}.`
-        : `Applied this change to the overall mix.`;
+  let response = 'Applied this change to the overall mix.';
+  if (effectName !== 'reset') {
+    if (selectedTracks.includes('Master')) {
+      response = `Applied a ${effectName} tone to the Master / overall mix.`;
+    } else if (selectedTracks.length) {
+      response = `Applied a ${effectName} tone to ${selectedTracks.join(' and ')}.`;
+    }
+  }
   syncSlidersFromAudioState();
   addMessage('assistant', response);
 }
@@ -314,6 +377,7 @@ async function loadAudioFile(file, trackName = 'Vocals') {
     pauseOffset = 0;
     playPauseBtn.textContent = 'Play';
     applyResetSettings();
+    resetPlayhead();
 
     setControlsEnabled(true);
     if (statusByTrack[trackName]) {
@@ -381,14 +445,30 @@ settingSliders.forEach((slider) => {
   });
 });
 
-trackRows.forEach((row) => {
-  row.addEventListener('click', () => {
-    trackRows.forEach((item) => item.classList.remove('selected'));
-    row.classList.add('selected');
-    selectedTrack = row.dataset.track || '';
-    selectedTrackDisplay.textContent = `Editing: ${selectedTrack || 'Overall mix'}`;
-  });
+trackList.addEventListener('mousedown', (event) => {
+  if (event.button !== 0) return;
+  const row = event.target.closest('.track-row');
+  if (!row) return;
+  isDraggingSelection = true;
+  setSelectedTracks([row.dataset.track || '']);
+  event.preventDefault();
+});
 
+trackList.addEventListener('mouseover', (event) => {
+  if (!isDraggingSelection) return;
+  const row = event.target.closest('.track-row');
+  if (!row) return;
+  const trackName = row.dataset.track || '';
+  if (!selectedTracks.includes(trackName)) {
+    setSelectedTracks([...selectedTracks, trackName]);
+  }
+});
+
+window.addEventListener('mouseup', () => {
+  isDraggingSelection = false;
+});
+
+trackRows.forEach((row) => {
   row.addEventListener('dragover', (event) => {
     event.preventDefault();
     row.classList.add('drag-over');

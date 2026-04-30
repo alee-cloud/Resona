@@ -59,7 +59,18 @@
             <label>1) Tracks</label>
             <p id="selectedTrackDisplay" class="small-label">Editing: Overall mix</p>
 
-            <div class="track-list">
+            <div class="track-list-container">
+              <div id="playhead" class="playhead" aria-hidden="true">
+                <span class="playhead-triangle"></span>
+              </div>
+              <div class="track-list">
+              <div class="track-row master-row" data-track="Master">
+                <span class="track-name">Master</span>
+                <div class="track-lane">
+                  <div class="wave-placeholder" aria-hidden="true"></div>
+                  <span class="track-status">Overall mix lane</span>
+                </div>
+              </div>
               <div class="track-row" data-track="Vocals">
                 <span class="track-name">Vocals</span>
                 <div class="track-lane">
@@ -87,6 +98,7 @@
                   <div class="wave-placeholder" aria-hidden="true"></div>
                   <span id="pianoStatus" class="track-status">Drop audio here</span>
                 </div>
+              </div>
               </div>
             </div>
 
