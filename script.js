@@ -9,6 +9,7 @@ const chatInput = document.getElementById('chatInput');
 const chatHistory = document.getElementById('chatHistory');
 const chipButtons = document.querySelectorAll('.chip');
 const trackRows = document.querySelectorAll('.track-row');
+const selectedTrackDisplay = document.getElementById('selectedTrackDisplay');
 
 
 // Keep sound settings sliders visually responsive (placeholder UI state only).
@@ -41,6 +42,7 @@ let sourceNode = null;
 let isPlaying = false;
 let startTime = 0;
 let pauseOffset = 0;
+let selectedTrack = '';
 
 // Effect nodes
 let lowShelfFilter;
@@ -278,11 +280,20 @@ function submitCommand(commandText) {
   }
 
   if (!audioBuffer) {
-    addMessage('assistant', commandMap[effectName].noAudioResponse);
+    addMessage(
+      'assistant',
+      `${commandMap[effectName].noAudioResponse} (Target: ${selectedTrack || 'Overall mix'})`
+    );
     return;
   }
 
-  const response = applyEffect(effectName);
+  applyEffect(effectName);
+  const response =
+    effectName === 'reset'
+      ? 'Reset tone settings'
+      : selectedTrack
+        ? `Applied a ${effectName} tone to ${selectedTrack}.`
+        : `Applied this change to the overall mix.`;
   syncSlidersFromAudioState();
   addMessage('assistant', response);
 }
@@ -371,6 +382,13 @@ settingSliders.forEach((slider) => {
 });
 
 trackRows.forEach((row) => {
+  row.addEventListener('click', () => {
+    trackRows.forEach((item) => item.classList.remove('selected'));
+    row.classList.add('selected');
+    selectedTrack = row.dataset.track || '';
+    selectedTrackDisplay.textContent = `Editing: ${selectedTrack || 'Overall mix'}`;
+  });
+
   row.addEventListener('dragover', (event) => {
     event.preventDefault();
     row.classList.add('drag-over');

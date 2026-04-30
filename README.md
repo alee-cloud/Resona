@@ -4,8 +4,9 @@
 This is a beginner-friendly, browser-based prototype for an AI-style music production workspace.
 
 In Version 1, there is still **no real AI**. Instead, the app now looks more like a simplified DAW workspace:
+- A **top control bar** with File/Edit/View/Help, project title, and Play/Pause
 - A **left Library panel** with placeholder Files, Instruments, and Samples
-- A **center workspace** with DAW-style track lanes, drag-and-drop loading, playback, and bottom sound settings sliders
+- A **center workspace** with DAW-style track lanes, click-to-select track focus, drag-and-drop loading, and bottom sound settings sliders
 - A **right chatbox** where users type plain-language commands (for example, “make it warmer”)
 - A basic Web Audio API engine that applies simple effects when demo audio is loaded
 
@@ -35,7 +36,7 @@ http://localhost:8000
 
 ## 3) What each file does
 - `index.html`  
-  Defines the three-column layout: left library placeholders, center tracks/playback/sound settings, and right chat history/input/chips.
+  Defines the top toolbar and three-column layout: left library placeholders, center tracks/sound settings, and right chat history/input/chips.
 
 - `style.css`  
   Adds clean minimal styling for the library/workspace/chat layout, DAW-style track rows, sound sliders, and chat UI.
@@ -61,6 +62,7 @@ http://localhost:8000
   - Piano
 - Drag and drop one **demo audio** file onto Vocals/Guitar/Drums/Piano (single-track behavior only).
 - Play and pause the loaded audio.
+- Click a track row (Vocals/Guitar/Drums/Piano) to set selection focus shown as `Editing: ...`.
 - See per-lane file status text update after drop.
 - Accept commands through chat text input or example chips:
   - `make it darker`
@@ -69,7 +71,7 @@ http://localhost:8000
   - `make it louder`
   - `reset`
 - Display user + assistant messages in a chat history.
-- If audio is loaded, apply matching Web Audio effects.
+- If audio is loaded, apply matching Web Audio effects and mention the selected track in assistant responses.
 - If audio is not loaded, still respond and prompt for demo upload.
 - Show 8 beginner-friendly sliders in Sound Settings: Lows, Mids, Highs, Warmth, Space, Punch, Width, Volume.
   - Functional now: Lows, Mids, Highs, Volume (+ chat command visual updates).
