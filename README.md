@@ -6,7 +6,7 @@ This is a beginner-friendly, browser-based prototype for an AI-style music produ
 In Version 1, there is still **no real AI**. Instead, the app now looks more like a simplified DAW workspace:
 - A **top control bar** with File/Edit/View/Help, project title, and Play/Pause
 - A **left Library panel** with placeholder Files, Instruments, and Samples
-- A **center workspace** with DAW-style track lanes, click-to-select track focus, drag-and-drop loading, and bottom sound settings sliders
+- A **center workspace** with DAW-style track lanes, a Master row, drag-select row targeting, drag-and-drop loading, and bottom sound settings sliders
 - A **right chatbox** where users type plain-language commands (for example, “make it warmer”)
 - A basic Web Audio API engine that applies simple effects when demo audio is loaded
 
@@ -55,14 +55,15 @@ http://localhost:8000
 ---
 
 ## 4) What Version 1 can do
-- Show 4 placeholder tracks:
+- Show 5 placeholder tracks:
+  - Master
   - Vocals
   - Guitar
   - Drums
   - Piano
 - Drag and drop one **demo audio** file onto Vocals/Guitar/Drums/Piano (single-track behavior only).
 - Play and pause the loaded audio.
-- Click a track row (Vocals/Guitar/Drums/Piano) to set selection focus shown as `Editing: ...`.
+- Drag across track rows to select editing targets shown as `Editing: ...`.
 - See per-lane file status text update after drop.
 - Accept commands through chat text input or example chips:
   - `make it darker`
