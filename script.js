@@ -70,6 +70,30 @@ function addMessage(role, text) {
 function clampSlider(value) { return Math.max(0, Math.min(100, value)); }
 function setSliderValue(slider, value) { slider.value = clampSlider(value); slider.title = slider.value; }
 
+
+function refreshDialUI(slider) {
+  const wrap = slider.closest('.dial-control');
+  if (!wrap) return;
+  const knob = wrap.querySelector('.dial-knob');
+  const indicator = wrap.querySelector('.dial-indicator');
+  const value = wrap.querySelector('.dial-value');
+  const numeric = Number(slider.value);
+  const ratio = numeric / 100;
+  const angle = -135 + ratio * 270;
+  knob.style.background = `conic-gradient(var(--accent) ${ratio * 270}deg, #e5e7eb 0deg)`;
+  indicator.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+  value.textContent = String(numeric);
+  knob.setAttribute('role', 'slider');
+  knob.setAttribute('aria-valuemin', slider.min);
+  knob.setAttribute('aria-valuemax', slider.max);
+  knob.setAttribute('aria-valuenow', slider.value);
+}
+
+function nudgeDial(slider, delta) {
+  setSliderValue(slider, Number(slider.value) + delta);
+  slider.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
 function scheduleParam(param, target) {
   if (!audioContext) return;
   const now = audioContext.currentTime;
@@ -280,9 +304,14 @@ chatForm.addEventListener('submit', (event) => { event.preventDefault(); const t
 chipButtons.forEach((chip) => chip.addEventListener('click', () => { const text = chip.dataset.command; submitCommand(text); }));
 
 settingSliders.forEach((slider) => {
+  const dialControl = slider.closest('.dial-control');
+  const dialButton = dialControl?.querySelector('.dial-knob');
   slider.title = slider.value;
+  refreshDialUI(slider);
+
   slider.addEventListener('input', () => {
     slider.title = slider.value;
+    refreshDialUI(slider);
     if (!audioContext) return;
     setFilterState({
       lows: (Number(lowsSlider.value) - 50) / 4,
@@ -291,6 +320,22 @@ settingSliders.forEach((slider) => {
       volume: Math.max(0, Number(volumeSlider.value) / 50)
     });
   });
+
+  if (dialButton) {
+    dialButton.addEventListener('click', () => dialButton.focus());
+    dialButton.addEventListener('wheel', (event) => {
+      event.preventDefault();
+      nudgeDial(slider, event.deltaY < 0 ? 1 : -1);
+    }, { passive: false });
+    dialButton.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowUp' || event.key === 'ArrowRight') { event.preventDefault(); nudgeDial(slider, 1); }
+      if (event.key === 'ArrowDown' || event.key === 'ArrowLeft') { event.preventDefault(); nudgeDial(slider, -1); }
+      if (event.key === 'PageUp') { event.preventDefault(); nudgeDial(slider, 5); }
+      if (event.key === 'PageDown') { event.preventDefault(); nudgeDial(slider, -5); }
+      if (event.key === 'Home') { event.preventDefault(); setSliderValue(slider, 0); slider.dispatchEvent(new Event('input', { bubbles: true })); }
+      if (event.key === 'End') { event.preventDefault(); setSliderValue(slider, 100); slider.dispatchEvent(new Event('input', { bubbles: true })); }
+    });
+  }
 });
 
 trackList.addEventListener('mousedown', (event) => {

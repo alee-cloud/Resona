@@ -23,159 +23,52 @@
         </div>
       </header>
 
+      <section class="panel controls-panel">
+        <label>Sound Settings</label>
+        <div class="sound-grid" role="group" aria-label="Sound controls">
+          <div class="dial-control" data-slider-id="lowsSlider"><span class="dial-label">Lows</span><button class="dial-knob" type="button" aria-label="Lows" aria-controls="lowsSlider"><span class="dial-indicator"></span></button><span class="dial-value">50</span><input id="lowsSlider" class="setting-slider" type="range" min="0" max="100" value="50" /></div>
+          <div class="dial-control" data-slider-id="midsSlider"><span class="dial-label">Mids</span><button class="dial-knob" type="button" aria-label="Mids" aria-controls="midsSlider"><span class="dial-indicator"></span></button><span class="dial-value">50</span><input id="midsSlider" class="setting-slider" type="range" min="0" max="100" value="50" /></div>
+          <div class="dial-control" data-slider-id="highsSlider"><span class="dial-label">Highs</span><button class="dial-knob" type="button" aria-label="Highs" aria-controls="highsSlider"><span class="dial-indicator"></span></button><span class="dial-value">50</span><input id="highsSlider" class="setting-slider" type="range" min="0" max="100" value="50" /></div>
+          <div class="dial-control" data-slider-id="warmthSlider"><span class="dial-label">Warmth</span><button class="dial-knob" type="button" aria-label="Warmth" aria-controls="warmthSlider"><span class="dial-indicator"></span></button><span class="dial-value">50</span><input id="warmthSlider" class="setting-slider" type="range" min="0" max="100" value="50" /></div>
+          <div class="dial-control" data-slider-id="spaceSlider"><span class="dial-label">Space</span><button class="dial-knob" type="button" aria-label="Space" aria-controls="spaceSlider"><span class="dial-indicator"></span></button><span class="dial-value">50</span><input id="spaceSlider" class="setting-slider" type="range" min="0" max="100" value="50" /></div>
+          <div class="dial-control" data-slider-id="punchSlider"><span class="dial-label">Punch</span><button class="dial-knob" type="button" aria-label="Punch" aria-controls="punchSlider"><span class="dial-indicator"></span></button><span class="dial-value">50</span><input id="punchSlider" class="setting-slider" type="range" min="0" max="100" value="50" /></div>
+          <div class="dial-control" data-slider-id="widthSlider"><span class="dial-label">Width</span><button class="dial-knob" type="button" aria-label="Width" aria-controls="widthSlider"><span class="dial-indicator"></span></button><span class="dial-value">50</span><input id="widthSlider" class="setting-slider" type="range" min="0" max="100" value="50" /></div>
+          <div class="dial-control" data-slider-id="volumeSlider"><span class="dial-label">Volume</span><button class="dial-knob" type="button" aria-label="Volume" aria-controls="volumeSlider"><span class="dial-indicator"></span></button><span class="dial-value">50</span><input id="volumeSlider" class="setting-slider" type="range" min="0" max="100" value="50" /></div>
+        </div>
+      </section>
+
       <section class="workspace-layout">
         <aside class="panel library-panel">
           <label>Library</label>
-
-          <div class="library-section">
-            <h2>Files</h2>
-            <ul>
-              <li>Demo Vocal.wav</li>
-              <li>Guitar Loop.wav</li>
-            </ul>
-          </div>
-
-          <div class="library-section">
-            <h2>Instruments</h2>
-            <ul>
-              <li>Vocals</li>
-              <li>Guitar</li>
-              <li>Drums</li>
-              <li>Piano</li>
-            </ul>
-          </div>
-
-          <div class="library-section">
-            <h2>Samples</h2>
-            <ul>
-              <li>Kick 01</li>
-              <li>Snare 02</li>
-              <li>Pad Loop</li>
-              <li>Ambient FX</li>
-            </ul>
-          </div>
+          <div class="library-section"><h2>Files</h2><ul><li>Demo Vocal.wav</li><li>Guitar Loop.wav</li></ul></div>
+          <div class="library-section"><h2>Instruments</h2><ul><li>Vocals</li><li>Guitar</li><li>Drums</li><li>Piano</li></ul></div>
+          <div class="library-section"><h2>Samples</h2><ul><li>Kick 01</li><li>Snare 02</li><li>Pad Loop</li><li>Ambient FX</li></ul></div>
         </aside>
 
         <section class="center-column">
           <section class="panel">
             <label>1) Tracks</label>
             <p id="selectedTrackDisplay" class="small-label">Editing: Overall mix</p>
-
             <div class="track-list-container">
-              <div id="playhead" class="playhead" aria-hidden="true">
-                <span class="playhead-triangle"></span>
-              </div>
+              <div id="playhead" class="playhead" aria-hidden="true"><span class="playhead-triangle"></span></div>
               <div class="track-list">
-              <div class="track-row master-row" data-track="Master">
-                <span class="track-name">Master</span>
-                <div class="track-lane">
-                  <div class="wave-placeholder" aria-hidden="true"></div>
-                  <span class="track-status">Overall mix lane</span>
-                </div>
-              </div>
-              <div class="track-row" data-track="Vocals">
-                <span class="track-name">Vocals</span>
-                <div class="track-lane">
-                  <div class="wave-placeholder" aria-hidden="true"></div>
-                  <span id="vocalsStatus" class="track-status">Drop audio here</span>
-                </div>
-              </div>
-              <div class="track-row" data-track="Guitar">
-                <span class="track-name">Guitar</span>
-                <div class="track-lane">
-                  <div class="wave-placeholder" aria-hidden="true"></div>
-                  <span id="guitarStatus" class="track-status">Drop audio here</span>
-                </div>
-              </div>
-              <div class="track-row" data-track="Drums">
-                <span class="track-name">Drums</span>
-                <div class="track-lane">
-                  <div class="wave-placeholder" aria-hidden="true"></div>
-                  <span id="drumsStatus" class="track-status">Drop audio here</span>
-                </div>
-              </div>
-              <div class="track-row" data-track="Piano">
-                <span class="track-name">Piano</span>
-                <div class="track-lane">
-                  <div class="wave-placeholder" aria-hidden="true"></div>
-                  <span id="pianoStatus" class="track-status">Drop audio here</span>
-                </div>
-              </div>
+                <div class="track-row master-row" data-track="Master"><span class="track-name">Master</span><div class="track-lane"><div class="wave-placeholder" aria-hidden="true"></div><span class="track-status">Overall mix lane</span></div></div>
+                <div class="track-row" data-track="Vocals"><span class="track-name">Vocals</span><div class="track-lane"><div class="wave-placeholder" aria-hidden="true"></div><span id="vocalsStatus" class="track-status">Drop audio here</span></div></div>
+                <div class="track-row" data-track="Guitar"><span class="track-name">Guitar</span><div class="track-lane"><div class="wave-placeholder" aria-hidden="true"></div><span id="guitarStatus" class="track-status">Drop audio here</span></div></div>
+                <div class="track-row" data-track="Drums"><span class="track-name">Drums</span><div class="track-lane"><div class="wave-placeholder" aria-hidden="true"></div><span id="drumsStatus" class="track-status">Drop audio here</span></div></div>
+                <div class="track-row" data-track="Piano"><span class="track-name">Piano</span><div class="track-lane"><div class="wave-placeholder" aria-hidden="true"></div><span id="pianoStatus" class="track-status">Drop audio here</span></div></div>
               </div>
             </div>
-
             <input id="audioFile" type="file" accept="audio/*" hidden />
           </section>
-
-          
         </section>
-
-        <aside class="panel controls-panel">
-            <label>Sound Settings</label>
-            <div class="sound-grid">
-              <div class="setting-row">
-                <span>Lows</span>
-                <input id="lowsSlider" class="setting-slider" type="range" min="0" max="100" value="50" />
-              </div>
-              <div class="setting-row">
-                <span>Mids</span>
-                <input id="midsSlider" class="setting-slider" type="range" min="0" max="100" value="50" />
-              </div>
-              <div class="setting-row">
-                <span>Highs</span>
-                <input id="highsSlider" class="setting-slider" type="range" min="0" max="100" value="50" />
-              </div>
-              <div class="setting-row">
-                <span>Warmth</span>
-                <input id="warmthSlider" class="setting-slider" type="range" min="0" max="100" value="50" />
-              </div>
-              <div class="setting-row">
-                <span>Space</span>
-                <input id="spaceSlider" class="setting-slider" type="range" min="0" max="100" value="50" />
-              </div>
-              <div class="setting-row">
-                <span>Punch</span>
-                <input id="punchSlider" class="setting-slider" type="range" min="0" max="100" value="50" />
-              </div>
-              <div class="setting-row">
-                <span>Width</span>
-                <input id="widthSlider" class="setting-slider" type="range" min="0" max="100" value="50" />
-              </div>
-              <div class="setting-row">
-                <span>Volume</span>
-                <input id="volumeSlider" class="setting-slider" type="range" min="0" max="100" value="50" />
-              </div>
-            </div>
-          </aside>
 
         <section class="panel chat-panel">
           <label>3) Command chatbox</label>
-
-          <div id="chatHistory" class="chat-history" aria-live="polite">
-            <div class="message assistant">
-              Assistant: Try a command like “make it warmer” or click an example
-              chip below.
-            </div>
-          </div>
-
-          <form id="chatForm" class="chat-form">
-            <input
-              id="chatInput"
-              type="text"
-              placeholder="Type a command (example: make it darker)"
-              autocomplete="off"
-            />
-            <button type="submit">Send</button>
-          </form>
-
+          <div id="chatHistory" class="chat-history" aria-live="polite"><div class="message assistant">Assistant: Try a command like “make it warmer” or click an example chip below.</div></div>
+          <form id="chatForm" class="chat-form"><input id="chatInput" type="text" placeholder="Type a command (example: make it darker)" autocomplete="off" /><button type="submit">Send</button></form>
           <div class="chip-row">
-            <button class="chip" data-command="make it darker" type="button">make it darker</button>
-            <button class="chip" data-command="make it brighter" type="button">make it brighter</button>
-            <button class="chip" data-command="make it warmer" type="button">make it warmer</button>
-            <button class="chip" data-command="make it louder" type="button">make it louder</button>
-            <button class="chip" data-command="switch to original" type="button">original (A)</button>
-            <button class="chip" data-command="switch to processed" type="button">processed (B)</button>
-            <button class="chip" data-command="reset" type="button">reset</button>
+            <button class="chip" data-command="make it darker" type="button">make it darker</button><button class="chip" data-command="make it brighter" type="button">make it brighter</button><button class="chip" data-command="make it warmer" type="button">make it warmer</button><button class="chip" data-command="make it louder" type="button">make it louder</button><button class="chip" data-command="switch to original" type="button">original (A)</button><button class="chip" data-command="switch to processed" type="button">processed (B)</button><button class="chip" data-command="reset" type="button">reset</button>
           </div>
         </section>
       </section>
