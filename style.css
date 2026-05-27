@@ -52,7 +52,7 @@ body {
 
 .workspace-layout {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr) 340px;
+  grid-template-columns: 220px minmax(0, 1fr) 300px 340px;
   gap: 1rem;
   align-items: start;
 }
@@ -104,7 +104,7 @@ li {
   width: 100%;
 }
 
-.sound-panel {
+.controls-panel {
   max-width: 560px;
   margin-left: auto;
   margin-right: auto;
@@ -335,7 +335,7 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
-  .sound-panel {
+  .controls-panel {
     max-width: none;
   }
 
@@ -352,3 +352,6 @@ button:disabled {
 .master-row .track-lane {
   background: #eff5ff;
 }
+
+.top-actions{display:flex;align-items:center;gap:.5rem;justify-self:end;}
+.inline-label{margin:0;font-size:.82rem;color:var(--muted);}

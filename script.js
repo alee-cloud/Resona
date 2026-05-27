@@ -1,9 +1,10 @@
-// Version 1 prototype using the Web Audio API.
-// This update uses a chatbox command flow instead of tone control buttons.
+// Version 2 prototype using the Web Audio API.
 
 const audioFileInput = document.getElementById('audioFile');
 const vocalsStatus = document.getElementById('vocalsStatus');
 const playPauseBtn = document.getElementById('playPauseBtn');
+const abToggleBtn = document.getElementById('abToggleBtn');
+const abModeLabel = document.getElementById('abModeLabel');
 const chatForm = document.getElementById('chatForm');
 const chatInput = document.getElementById('chatInput');
 const chatHistory = document.getElementById('chatHistory');
@@ -13,15 +14,6 @@ const selectedTrackDisplay = document.getElementById('selectedTrackDisplay');
 const playhead = document.getElementById('playhead');
 const trackList = document.querySelector('.track-list');
 
-
-// Keep sound settings sliders visually responsive (placeholder UI state only).
-const settingSliders = document.querySelectorAll('.setting-slider');
-settingSliders.forEach((slider) => {
-  slider.title = slider.value;
-  slider.addEventListener('input', () => {
-    slider.title = slider.value;
-  });
-});
 const lowsSlider = document.getElementById('lowsSlider');
 const midsSlider = document.getElementById('midsSlider');
 const highsSlider = document.getElementById('highsSlider');
@@ -30,47 +22,75 @@ const spaceSlider = document.getElementById('spaceSlider');
 const punchSlider = document.getElementById('punchSlider');
 const widthSlider = document.getElementById('widthSlider');
 const volumeSlider = document.getElementById('volumeSlider');
+const settingSliders = document.querySelectorAll('.setting-slider');
+
 const statusByTrack = {
   Vocals: document.getElementById('vocalsStatus'),
   Guitar: document.getElementById('guitarStatus'),
   Drums: document.getElementById('drumsStatus'),
-  Piano: document.getElementById('pianoStatus'),
+  Piano: document.getElementById('pianoStatus')
 };
 
-// Audio state
 let audioContext;
-let audioBuffer = null;
 let sourceNode = null;
 let isPlaying = false;
 let startTime = 0;
 let pauseOffset = 0;
-let selectedTrack = '';
 let selectedTracks = [];
 let playheadFrame = null;
 let isDraggingSelection = false;
+let monitoringMode = 'processed';
 
-// Effect nodes
+// basic per-track architecture (single active source for now)
+const tracks = {
+  Master: { name: 'Master', audioBuffer: null, sourceFileName: '' },
+  Vocals: { name: 'Vocals', audioBuffer: null, sourceFileName: '' },
+  Guitar: { name: 'Guitar', audioBuffer: null, sourceFileName: '' },
+  Drums: { name: 'Drums', audioBuffer: null, sourceFileName: '' },
+  Piano: { name: 'Piano', audioBuffer: null, sourceFileName: '' }
+};
+
 let lowShelfFilter;
 let peakingFilter;
 let highShelfFilter;
 let outputGain;
+let dryGain;
 
-// Default values used by Reset
-const defaults = {
-  lowShelfGain: 0,
-  peakingGain: 0,
-  highShelfGain: 0,
-  masterGain: 1,
-};
+const defaults = { lowShelfGain: 0, peakingGain: 0, highShelfGain: 0, masterGain: 1 };
+const RAMP_SECONDS = 0.18;
 
-function clampSlider(value) {
-  return Math.max(0, Math.min(100, value));
+function addMessage(role, text) {
+  const message = document.createElement('div');
+  message.className = `message ${role}`;
+  message.textContent = `${role === 'user' ? 'You' : 'Assistant'}: ${text}`;
+  chatHistory.appendChild(message);
+  chatHistory.scrollTop = chatHistory.scrollHeight;
 }
 
-function setSliderValue(slider, value) {
-  if (!slider) return;
-  slider.value = clampSlider(value);
-  slider.title = slider.value;
+function clampSlider(value) { return Math.max(0, Math.min(100, value)); }
+function setSliderValue(slider, value) { slider.value = clampSlider(value); slider.title = slider.value; }
+
+function scheduleParam(param, target) {
+  if (!audioContext) return;
+  const now = audioContext.currentTime;
+  param.cancelScheduledValues(now);
+  param.setValueAtTime(param.value, now);
+  param.linearRampToValueAtTime(target, now + RAMP_SECONDS);
+}
+
+function setFilterState({ lows, mids, highs, volume }) {
+  scheduleParam(lowShelfFilter.gain, lows);
+  scheduleParam(peakingFilter.gain, mids);
+  scheduleParam(highShelfFilter.gain, highs);
+  scheduleParam(outputGain.gain, volume);
+}
+
+function activeTrackName() {
+  return selectedTracks.find((t) => t !== 'Master') || 'Vocals';
+}
+
+function currentBuffer() {
+  return tracks[activeTrackName()]?.audioBuffer || tracks.Vocals.audioBuffer;
 }
 
 function syncSlidersFromAudioState() {
@@ -81,16 +101,18 @@ function syncSlidersFromAudioState() {
   setSliderValue(volumeSlider, outputGain.gain.value * 50);
 }
 
+function updateABModeUI() {
+  const isOriginal = monitoringMode === 'original';
+  abModeLabel.textContent = isOriginal ? 'Monitoring: Original' : 'Monitoring: Processed';
+  abToggleBtn.textContent = isOriginal ? 'Switch to Processed (B)' : 'Switch to Original (A)';
+  if (!audioContext) return;
+  scheduleParam(dryGain.gain, isOriginal ? 1 : 0);
+}
+
 function resetAllSliders() {
-  setSliderValue(lowsSlider, 50);
-  setSliderValue(midsSlider, 50);
-  setSliderValue(highsSlider, 50);
-  setSliderValue(warmthSlider, 50);
-  // Visual placeholders for future audio engine work:
-  setSliderValue(spaceSlider, 50);
-  setSliderValue(punchSlider, 50);
-  setSliderValue(widthSlider, 50);
-  setSliderValue(volumeSlider, 50);
+  [lowsSlider, midsSlider, highsSlider, warmthSlider, spaceSlider, punchSlider, widthSlider, volumeSlider].forEach((slider, i) => {
+    setSliderValue(slider, i === 7 ? 50 : 50);
+  });
 }
 
 function getSelectionTargetText() {
@@ -100,348 +122,174 @@ function getSelectionTargetText() {
 }
 
 function updateSelectedTrackDisplay() {
-  if (!selectedTracks.length) {
-    selectedTrackDisplay.textContent = 'Editing: Overall mix';
-  } else {
-    selectedTrackDisplay.textContent = `Editing: ${selectedTracks.join(', ')}`;
-  }
+  selectedTrackDisplay.textContent = selectedTracks.length ? `Editing: ${selectedTracks.join(', ')}` : 'Editing: Overall mix';
 }
 
 function setSelectedTracks(trackNames) {
   selectedTracks = [...new Set(trackNames)];
-  selectedTrack = selectedTracks.length ? selectedTracks[0] : '';
-  trackRows.forEach((item) => {
-    const isSelected = selectedTracks.includes(item.dataset.track || '');
-    item.classList.toggle('selected', isSelected);
-  });
+  trackRows.forEach((item) => item.classList.toggle('selected', selectedTracks.includes(item.dataset.track || '')));
   updateSelectedTrackDisplay();
 }
 
 function updatePlayheadPosition() {
-  if (!playhead || !trackList) return;
+  const audioBuffer = currentBuffer();
   if (!audioBuffer || !isPlaying) return;
   const elapsed = audioContext.currentTime - startTime;
-  const progress = Math.max(0, Math.min(1, elapsed / audioBuffer.duration));
-  playhead.style.left = `${progress * 100}%`;
-
-  if (isPlaying) {
-    playheadFrame = window.requestAnimationFrame(updatePlayheadPosition);
-  }
-}
-
-function startPlayheadAnimation() {
-  if (playheadFrame) window.cancelAnimationFrame(playheadFrame);
+  playhead.style.left = `${Math.max(0, Math.min(1, elapsed / audioBuffer.duration)) * 100}%`;
   playheadFrame = window.requestAnimationFrame(updatePlayheadPosition);
 }
 
-function pausePlayheadAnimation() {
-  if (playheadFrame) {
-    window.cancelAnimationFrame(playheadFrame);
-    playheadFrame = null;
-  }
-}
-
-function resetPlayhead() {
-  pausePlayheadAnimation();
-  if (playhead) playhead.style.left = '0%';
-}
-
-// Small command map for easy future extension (for example, connecting to visual dials later).
-const commandMap = {
-  darker: {
-    match: ['darker'],
-    noAudioResponse:
-      'I can make it darker by reducing highs. Upload demo audio to hear the change.',
-  },
-  brighter: {
-    match: ['brighter'],
-    noAudioResponse:
-      'I can make it brighter by boosting highs. Upload demo audio to hear the change.',
-  },
-  warmer: {
-    match: ['warmer'],
-    noAudioResponse:
-      'I can make it warmer by adding low-mid body. Upload demo audio to hear the change.',
-  },
-  louder: {
-    match: ['louder'],
-    noAudioResponse:
-      'I can make it louder with careful gain. Upload demo audio to hear the change.',
-  },
-  reset: {
-    match: ['reset'],
-    noAudioResponse:
-      'I can reset all tone settings to default. Upload demo audio to hear the reset result.',
-  },
-};
-
-function addMessage(role, text) {
-  const message = document.createElement('div');
-  message.className = `message ${role}`;
-  message.textContent = `${role === 'user' ? 'You' : 'Assistant'}: ${text}`;
-  chatHistory.appendChild(message);
-  chatHistory.scrollTop = chatHistory.scrollHeight;
-}
+function startPlayheadAnimation() { if (playheadFrame) window.cancelAnimationFrame(playheadFrame); playheadFrame = window.requestAnimationFrame(updatePlayheadPosition); }
+function pausePlayheadAnimation() { if (playheadFrame) window.cancelAnimationFrame(playheadFrame); playheadFrame = null; }
+function resetPlayhead() { pausePlayheadAnimation(); playhead.style.left = '0%'; }
 
 function initAudioGraph() {
   audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
-  // source -> lowShelf -> peaking -> highShelf -> outputGain -> speakers
   lowShelfFilter = audioContext.createBiquadFilter();
-  lowShelfFilter.type = 'lowshelf';
-  lowShelfFilter.frequency.value = 220;
-
+  lowShelfFilter.type = 'lowshelf'; lowShelfFilter.frequency.value = 220;
   peakingFilter = audioContext.createBiquadFilter();
-  peakingFilter.type = 'peaking';
-  peakingFilter.frequency.value = 450;
-  peakingFilter.Q.value = 0.8;
-
+  peakingFilter.type = 'peaking'; peakingFilter.frequency.value = 450; peakingFilter.Q.value = 0.8;
   highShelfFilter = audioContext.createBiquadFilter();
-  highShelfFilter.type = 'highshelf';
-  highShelfFilter.frequency.value = 4200;
-
+  highShelfFilter.type = 'highshelf'; highShelfFilter.frequency.value = 4200;
   outputGain = audioContext.createGain();
+  dryGain = audioContext.createGain();
 
   lowShelfFilter.connect(peakingFilter);
   peakingFilter.connect(highShelfFilter);
   highShelfFilter.connect(outputGain);
   outputGain.connect(audioContext.destination);
+  dryGain.connect(audioContext.destination);
 
   applyResetSettings();
+  updateABModeUI();
 }
 
 function applyResetSettings() {
-  lowShelfFilter.gain.value = defaults.lowShelfGain;
-  peakingFilter.gain.value = defaults.peakingGain;
-  highShelfFilter.gain.value = defaults.highShelfGain;
-  outputGain.gain.value = defaults.masterGain;
+  setFilterState({ lows: defaults.lowShelfGain, mids: defaults.peakingGain, highs: defaults.highShelfGain, volume: defaults.masterGain });
   resetAllSliders();
 }
 
 function stopCurrentSource() {
   if (!sourceNode) return;
-
-  try {
-    sourceNode.stop();
-  } catch {
-    // Ignore stop() errors if already stopped.
-  }
-
+  try { sourceNode.stop(); } catch {}
   sourceNode.disconnect();
   sourceNode = null;
 }
 
 function createAndStartSource(offsetSeconds) {
+  const audioBuffer = currentBuffer();
+  if (!audioBuffer) return;
   sourceNode = audioContext.createBufferSource();
   sourceNode.buffer = audioBuffer;
   sourceNode.connect(lowShelfFilter);
-
+  sourceNode.connect(dryGain);
   sourceNode.start(0, offsetSeconds);
   startTime = audioContext.currentTime - offsetSeconds;
   isPlaying = true;
   playPauseBtn.textContent = 'Pause';
   startPlayheadAnimation();
-
   sourceNode.onended = () => {
-    if (isPlaying) {
-      isPlaying = false;
-      pauseOffset = 0;
-      playPauseBtn.textContent = 'Play';
-      resetPlayhead();
-      addMessage('assistant', 'Playback finished. Press Play to listen again.');
-    }
+    if (!isPlaying) return;
+    isPlaying = false; pauseOffset = 0; playPauseBtn.textContent = 'Play'; resetPlayhead();
+    addMessage('assistant', 'Playback finished. Press Play to listen again.');
   };
 }
 
-function playAudio() {
-  if (!audioBuffer) return;
+function playAudio() { if (audioContext.state === 'suspended') audioContext.resume(); createAndStartSource(pauseOffset); }
+function pauseAudio() { pauseOffset = audioContext.currentTime - startTime; stopCurrentSource(); isPlaying = false; playPauseBtn.textContent = 'Play'; pausePlayheadAnimation(); }
 
-  if (audioContext.state === 'suspended') {
-    audioContext.resume();
-  }
-
-  createAndStartSource(pauseOffset);
-}
-
-function pauseAudio() {
-  if (!isPlaying) return;
-
-  pauseOffset = audioContext.currentTime - startTime;
-  stopCurrentSource();
-  isPlaying = false;
-  playPauseBtn.textContent = 'Play';
-  pausePlayheadAnimation();
-}
-
-function setControlsEnabled(enabled) {
-  playPauseBtn.disabled = !enabled;
-}
-
-function applyEffect(effectName) {
-  switch (effectName) {
-    case 'darker':
-      highShelfFilter.gain.value = -8;
-      peakingFilter.gain.value = -1;
-      setSliderValue(highsSlider, Number(highsSlider.value) - 18);
-      setSliderValue(warmthSlider, Number(warmthSlider.value) + 8);
-      return 'Applied “make it darker”: reduced high frequencies for a smoother top end.';
-
-    case 'brighter':
-      highShelfFilter.gain.value = 7;
-      peakingFilter.gain.value = 0;
-      setSliderValue(highsSlider, Number(highsSlider.value) + 18);
-      setSliderValue(midsSlider, Number(midsSlider.value) + 8);
-      return 'Applied “make it brighter”: boosted high frequencies for more clarity.';
-
-    case 'warmer':
-      peakingFilter.gain.value = 4;
-      highShelfFilter.gain.value = -2;
-      lowShelfFilter.gain.value = 2;
-      setSliderValue(warmthSlider, Number(warmthSlider.value) + 16);
-      setSliderValue(lowsSlider, Number(lowsSlider.value) + 8);
-      setSliderValue(highsSlider, Number(highsSlider.value) - 8);
-      return 'Applied “make it warmer”: added low-mid body and softened highs.';
-
-    case 'louder':
-      outputGain.gain.value = Math.min(outputGain.gain.value + 0.2, 1.6);
-      setSliderValue(volumeSlider, Number(volumeSlider.value) + 10);
-      return 'Applied “make it louder”: raised output gain a little (with a safety cap).';
-
-    case 'reset':
-      applyResetSettings();
-      return 'Applied “reset”: returned filters and volume to default values.';
-
-    default:
-      return '';
-  }
-}
-
-function commandToEffect(commandText) {
+function parseCommand(commandText) {
   const normalized = commandText.toLowerCase().trim();
+  const intensity = normalized.includes('slightly') ? 0.6 : normalized.includes('a lot') || normalized.includes('much') ? 1.5 : 1;
+  const rules = [
+    { test: /(dark|darker|less bright)/, action: 'tone', delta: { highs: -8, mids: -1 }, response: 'darker' },
+    { test: /(bright|brighter|sparkle)/, action: 'tone', delta: { highs: 7, mids: 1 }, response: 'brighter' },
+    { test: /(warm|warmer)/, action: 'tone', delta: { lows: 2, mids: 4, highs: -2 }, response: 'warmer' },
+    { test: /(loud|louder|volume up)/, action: 'volume', delta: 0.2, response: 'louder' },
+    { test: /(reset|default)/, action: 'reset', response: 'reset' },
+    { test: /(original|a\/b\s*a|compare\s*original)/, action: 'ab_original', response: 'A/original' },
+    { test: /(processed|a\/b\s*b|compare\s*processed)/, action: 'ab_processed', response: 'B/processed' }
+  ];
+  const matched = rules.find((rule) => rule.test.test(normalized));
+  if (!matched) return null;
+  return { ...matched, intensity };
+}
 
-  for (const [effectName, config] of Object.entries(commandMap)) {
-    const matched = config.match.some((keyword) => normalized.includes(keyword));
-    if (matched) return effectName;
+function applyParsedCommand(parsed) {
+  if (parsed.action === 'reset') {
+    applyResetSettings();
+    return 'Applied reset to default tone settings.';
   }
-
-  return null;
+  if (parsed.action === 'ab_original') {
+    monitoringMode = 'original'; updateABModeUI(); return 'A/B compare set to Original (A).';
+  }
+  if (parsed.action === 'ab_processed') {
+    monitoringMode = 'processed'; updateABModeUI(); return 'A/B compare set to Processed (B).';
+  }
+  if (parsed.action === 'volume') {
+    const next = Math.min(outputGain.gain.value + parsed.delta * parsed.intensity, 1.6);
+    scheduleParam(outputGain.gain, next);
+    setSliderValue(volumeSlider, next * 50);
+    return 'Applied louder adjustment with smooth ramping.';
+  }
+  const lows = lowShelfFilter.gain.value + (parsed.delta.lows || 0) * parsed.intensity;
+  const mids = peakingFilter.gain.value + (parsed.delta.mids || 0) * parsed.intensity;
+  const highs = highShelfFilter.gain.value + (parsed.delta.highs || 0) * parsed.intensity;
+  setFilterState({ lows, mids, highs, volume: outputGain.gain.value });
+  syncSlidersFromAudioState();
+  return `Applied ${parsed.response} tone move with smooth parameter ramps.`;
 }
 
 function submitCommand(commandText) {
   addMessage('user', commandText);
-
-  const effectName = commandToEffect(commandText);
-
-  if (!effectName) {
-    addMessage(
-      'assistant',
-      'I did not understand that yet. Try: make it darker, make it brighter, make it warmer, make it louder, or reset.'
-    );
+  const parsed = parseCommand(commandText);
+  if (!parsed) {
+    addMessage('assistant', 'I did not understand that yet. Try: warmer, brighter, darker, louder, reset, original, processed.');
     return;
   }
-
-  if (!audioBuffer) {
-    addMessage(
-      'assistant',
-      `${commandMap[effectName].noAudioResponse} (Target: ${getSelectionTargetText()})`
-    );
+  if (!currentBuffer() && !parsed.action.startsWith('ab_')) {
+    addMessage('assistant', `I can do that after you load audio. (Target: ${getSelectionTargetText()})`);
     return;
   }
-
-  applyEffect(effectName);
-  let response = 'Applied this change to the overall mix.';
-  if (effectName !== 'reset') {
-    if (selectedTracks.includes('Master')) {
-      response = `Applied a ${effectName} tone to the Master / overall mix.`;
-    } else if (selectedTracks.length) {
-      response = `Applied a ${effectName} tone to ${selectedTracks.join(' and ')}.`;
-    }
-  }
-  syncSlidersFromAudioState();
-  addMessage('assistant', response);
+  const response = applyParsedCommand(parsed);
+  addMessage('assistant', `${response} Target: ${getSelectionTargetText()}.`);
 }
 
 async function loadAudioFile(file, trackName = 'Vocals') {
   if (!file) return;
-
   try {
-    if (!audioContext) {
-      initAudioGraph();
-    }
-
+    if (!audioContext) initAudioGraph();
     const fileArrayBuffer = await file.arrayBuffer();
-    audioBuffer = await audioContext.decodeAudioData(fileArrayBuffer);
-
-    stopCurrentSource();
-    isPlaying = false;
-    pauseOffset = 0;
-    playPauseBtn.textContent = 'Play';
-    applyResetSettings();
-    resetPlayhead();
-
-    setControlsEnabled(true);
-    if (statusByTrack[trackName]) {
-      statusByTrack[trackName].textContent = `Loaded: ${file.name}`;
-    } else {
-      vocalsStatus.textContent = `Loaded: ${file.name}`;
-    }
-    addMessage('assistant', `Loaded demo audio on ${trackName}: ${file.name}. Press Play or send a chat command.`);
+    const decoded = await audioContext.decodeAudioData(fileArrayBuffer);
+    tracks[trackName].audioBuffer = decoded;
+    tracks[trackName].sourceFileName = file.name;
+    stopCurrentSource(); isPlaying = false; pauseOffset = 0; playPauseBtn.textContent = 'Play'; resetPlayhead();
+    playPauseBtn.disabled = false;
+    statusByTrack[trackName].textContent = `Loaded: ${file.name}`;
+    addMessage('assistant', `Loaded audio on ${trackName}: ${file.name}.`);
   } catch (error) {
     console.error(error);
-    addMessage(
-      'assistant',
-      'Could not load that file. Try another format like .wav or .mp3.'
-    );
+    addMessage('assistant', 'Could not load that file. Try .wav or .mp3.');
   }
 }
 
-// Hidden file input remains as a fallback path, but main UI now uses drag-and-drop.
-audioFileInput.addEventListener('change', async (event) => {
-  const file = event.target.files[0];
-  await loadAudioFile(file, 'Vocals');
-});
-
-playPauseBtn.addEventListener('click', () => {
-  if (!audioBuffer) return;
-
-  if (isPlaying) {
-    pauseAudio();
-    addMessage('assistant', 'Paused playback. Press Play to continue from this position.');
-  } else {
-    playAudio();
-    addMessage('assistant', 'Playing audio. You can send chat commands while it plays.');
-  }
-});
-
-chatForm.addEventListener('submit', (event) => {
-  event.preventDefault();
-  const commandText = chatInput.value.trim();
-
-  if (!commandText) return;
-
-  submitCommand(commandText);
-  chatInput.value = '';
-});
-
-chipButtons.forEach((chip) => {
-  chip.addEventListener('click', () => {
-    // Behaves like typing an example and submitting.
-    const commandText = chip.dataset.command;
-    chatInput.value = commandText;
-    submitCommand(commandText);
-    chatInput.value = '';
-  });
-});
+audioFileInput.addEventListener('change', async (event) => loadAudioFile(event.target.files[0], 'Vocals'));
+playPauseBtn.addEventListener('click', () => { if (!currentBuffer()) return; isPlaying ? pauseAudio() : playAudio(); });
+abToggleBtn.addEventListener('click', () => { monitoringMode = monitoringMode === 'processed' ? 'original' : 'processed'; updateABModeUI(); addMessage('assistant', `Switched monitor to ${monitoringMode}.`); });
+chatForm.addEventListener('submit', (event) => { event.preventDefault(); const text = chatInput.value.trim(); if (!text) return; submitCommand(text); chatInput.value = ''; });
+chipButtons.forEach((chip) => chip.addEventListener('click', () => { const text = chip.dataset.command; submitCommand(text); }));
 
 settingSliders.forEach((slider) => {
+  slider.title = slider.value;
   slider.addEventListener('input', () => {
+    slider.title = slider.value;
     if (!audioContext) return;
-    // Functional sliders mapped to existing safe audio nodes.
-    lowShelfFilter.gain.value = (Number(lowsSlider.value) - 50) / 4;
-    peakingFilter.gain.value = (Number(midsSlider.value) - 50) / 4;
-    highShelfFilter.gain.value = (Number(highsSlider.value) - 50) / 4;
-    outputGain.gain.value = Math.max(0, Number(volumeSlider.value) / 50);
-    // Warmth/Space/Punch/Width are visual placeholders for now.
+    setFilterState({
+      lows: (Number(lowsSlider.value) - 50) / 4,
+      mids: (Number(midsSlider.value) - 50) / 4,
+      highs: (Number(highsSlider.value) - 50) / 4,
+      volume: Math.max(0, Number(volumeSlider.value) / 50)
+    });
   });
 });
 
@@ -453,40 +301,25 @@ trackList.addEventListener('mousedown', (event) => {
   setSelectedTracks([row.dataset.track || '']);
   event.preventDefault();
 });
-
 trackList.addEventListener('mouseover', (event) => {
   if (!isDraggingSelection) return;
   const row = event.target.closest('.track-row');
   if (!row) return;
   const trackName = row.dataset.track || '';
-  if (!selectedTracks.includes(trackName)) {
-    setSelectedTracks([...selectedTracks, trackName]);
-  }
+  if (!selectedTracks.includes(trackName)) setSelectedTracks([...selectedTracks, trackName]);
 });
-
-window.addEventListener('mouseup', () => {
-  isDraggingSelection = false;
-});
+window.addEventListener('mouseup', () => { isDraggingSelection = false; });
 
 trackRows.forEach((row) => {
-  row.addEventListener('dragover', (event) => {
-    event.preventDefault();
-    row.classList.add('drag-over');
-  });
-
-  row.addEventListener('dragleave', () => {
-    row.classList.remove('drag-over');
-  });
-
+  row.addEventListener('dragover', (event) => { event.preventDefault(); row.classList.add('drag-over'); });
+  row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
   row.addEventListener('drop', async (event) => {
-    event.preventDefault();
-    row.classList.remove('drag-over');
+    event.preventDefault(); row.classList.remove('drag-over');
     const file = event.dataTransfer?.files?.[0];
-    if (!file || !file.type.startsWith('audio/')) {
-      addMessage('assistant', 'Please drop an audio file like .wav or .mp3.');
-      return;
-    }
+    if (!file || !file.type.startsWith('audio/')) { addMessage('assistant', 'Please drop an audio file like .wav or .mp3.'); return; }
     const trackName = row.dataset.track || 'Vocals';
     await loadAudioFile(file, trackName);
   });
 });
+
+updateABModeUI();

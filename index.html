@@ -18,6 +18,8 @@
         <div class="project-title">Resona Prototype</div>
         <div class="top-actions">
           <button id="playPauseBtn" disabled>Play</button>
+          <button id="abToggleBtn" type="button">Switch to Original (A)</button>
+          <span id="abModeLabel" class="small-label inline-label">Monitoring: Processed</span>
         </div>
       </header>
 
@@ -105,7 +107,10 @@
             <input id="audioFile" type="file" accept="audio/*" hidden />
           </section>
 
-          <section class="panel sound-panel">
+          
+        </section>
+
+        <aside class="panel controls-panel">
             <label>Sound Settings</label>
             <div class="sound-grid">
               <div class="setting-row">
@@ -141,8 +146,7 @@
                 <input id="volumeSlider" class="setting-slider" type="range" min="0" max="100" value="50" />
               </div>
             </div>
-          </section>
-        </section>
+          </aside>
 
         <section class="panel chat-panel">
           <label>3) Command chatbox</label>
@@ -169,6 +173,8 @@
             <button class="chip" data-command="make it brighter" type="button">make it brighter</button>
             <button class="chip" data-command="make it warmer" type="button">make it warmer</button>
             <button class="chip" data-command="make it louder" type="button">make it louder</button>
+            <button class="chip" data-command="switch to original" type="button">original (A)</button>
+            <button class="chip" data-command="switch to processed" type="button">processed (B)</button>
             <button class="chip" data-command="reset" type="button">reset</button>
           </div>
         </section>
